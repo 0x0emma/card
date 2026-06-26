@@ -89,6 +89,7 @@
                 <div><label>画像2：</label><input type="file" id="bgFileInput2" accept="image/*" onchange="loadCardBackground(event, 2)"></div>
             </div>
         </div>
+
         <div class="control-row">
             <div class="control-group"><label>パネル色：</label><input type="color" id="panelColorPicker" value="#ffffff" oninput="updateCardStyle()"></div>
             <div class="control-group"><label>文字の色：</label><input type="color" id="textColorPicker" value="#2b2b2b" oninput="updateCardStyle()"></div>
@@ -333,16 +334,39 @@
     function saveCard() {
         const ins = document.querySelectorAll('textarea');
         const outs = document.querySelectorAll('.display-text');
+        
+        // 保存時の一時的なスタイル変更
         ins.forEach(el => el.style.display = 'none');
-        outs.forEach(el => { el.style.display = 'block'; if(el.textContent==="") el.innerHTML="&nbsp;"; });
-        html2canvas(document.getElementById('charCard'), {scale: 2, useCORS: true}).then(canvas => {
-            ins.forEach(el => el.style.display = 'block');
-            outs.forEach(el => el.style.display = 'none');
-            const link = document.createElement('a');
-            link.download = 'ff14_profile.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
+        outs.forEach(el => { 
+            el.style.display = 'block'; 
+            if(el.textContent === "") {
+                el.innerHTML = "&nbsp;"; 
+            }
+            // 親のinput-groupの高さを自動(テキストに合わせる)にし、textareaの固定高さを引き継がないようにする
+            if(el.parentElement) {
+                el.parentElement.style.height = 'auto';
+                el.parentElement.style.minHeight = 'auto';
+            }
         });
+
+        // 少しだけレイアウトの確定を待ってからキャプチャする
+        setTimeout(() => {
+            html2canvas(document.getElementById('charCard'), {scale: 2, useCORS: true}).then(canvas => {
+                // キャプチャが終わったら元の表示状態に戻す
+                ins.forEach(el => el.style.display = 'block');
+                outs.forEach(el => {
+                    el.style.display = 'none';
+                    if(el.parentElement) {
+                        el.parentElement.style.height = ''; // 元のCSSの設定に戻す
+                    }
+                });
+                
+                const link = document.createElement('a');
+                link.download = 'ff14_profile.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }, 50); // 50ミリ秒のディレイ
     }
 </script>
 </body>
